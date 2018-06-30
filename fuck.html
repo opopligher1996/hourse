@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta http-equiv="Access-Control-Allow-Origin" content="*" />
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		 <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+
+		<title>WebMag HTML Template</title>
+
+		<!-- Google font -->
+		<link href="https://fonts.googleapis.com/css?family=Nunito+Sans:700%7CNunito:300,600" rel="stylesheet">
+
+		<!-- Bootstrap -->
+		<link type="text/css" rel="stylesheet" href="css/bootstrap.min.css"/>
+
+		<!-- Font Awesome Icon -->
+		<link rel="stylesheet" href="css/font-awesome.min.css">
+
+		<!-- Custom stlylesheet -->
+		<link type="text/css" rel="stylesheet" href="css/style.css"/>
+
+		<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+		<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+		<!--[if lt IE 9]>
+		  <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+		  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+		<![endif]-->
+
+    </head>
+	<body>
+		<div id="search_bar">
+		</div>
+		<div id="search_result">
+		</div>
+		<div id="chart_result">
+		</div>
+			<script>
+					var checkbox_list = "屌邊隻馬仔： ";
+					for(var i=1; i<15;i++)
+					{
+						checkbox_list = checkbox_list + '<input type="checkbox" id="hourse_'+i+'" class="hourse_checkbox"/><label for="scales">'+i+'</label>';
+					}
+					checkbox_list = checkbox_list + "<br> 屌邊場：";
+					for(var i=1; i<15;i++)
+					{
+						checkbox_list = checkbox_list + '<input type="checkbox" id="race_'+i+'" class="race_checkbox"/><label for="scales">'+i+'</label>'
+					}
+					checkbox_list = checkbox_list + '<br> <button onclick="javascript:search()">屌你老母</button><br><button onclick="javascript:download()">圖定老母？</button><br><br><button onclick="javascript:d3_chart()">臭閪</button><br>';
+					document.getElementById("search_bar").innerHTML=checkbox_list;
+
+
+					function d3_chart(){
+
+					}
+					function search(){
+						var result = '<table id="result_table" border="1" width="100%"><tr><th> Time </th><th> Race No </th><th> No </th><th> Win_Odds </th><th> Win </th><th> AllWin </th></tr>';
+						for(var i = 0;i<document.getElementsByClassName('hourse_checkbox').length;i++)
+						{
+							if(document.getElementsByClassName('hourse_checkbox')[i].checked)
+							{
+								for(var j = 0;j<document.getElementsByClassName('race_checkbox').length;j++)
+								{
+									if(document.getElementsByClassName('race_checkbox')[j].checked)
+									{
+										for(var k = 0;k<document.getElementsByClassName((j+1)+'_'+(i+1)).length;k++)
+										{
+											result = result + '<tr class="dataset">'+document.getElementsByClassName((j+1)+'_'+(i+1))[k].innerHTML+'</tr>';
+										}
+									}
+								}
+							}
+						}
+						document.getElementById("search_result").innerHTML=result;
+					}
+
+					function download(){
+						var rows = [document.getElementsByClassName('dataset')[0].getElementsByClassName('d').length/6][6];
+						var csvContent = "data:text/csv;charset=utf-8,";
+						for(var i=0;i<document.getElementsByClassName('dataset').length;i++)
+						{
+							csvContent = csvContent+document.getElementsByClassName('dataset')[i].getElementsByClassName('d')[0].innerHTML;
+							csvContent = csvContent+','+document.getElementsByClassName('dataset')[i].getElementsByClassName('d')[1].innerHTML;
+							csvContent = csvContent+','+document.getElementsByClassName('dataset')[i].getElementsByClassName('d')[2].innerHTML;
+							csvContent = csvContent+','+document.getElementsByClassName('dataset')[i].getElementsByClassName('d')[3].innerHTML;
+							csvContent = csvContent+','+ document.getElementsByClassName('dataset')[i].getElementsByClassName('d')[4].innerHTML;
+							csvContent = csvContent+','+document.getElementsByClassName('dataset')[i].getElementsByClassName('d')[5].innerHTML;
+							csvContent = csvContent+ "\r\n";
+							//console.log(document.getElementsByClassName('d')[i]);
+						}
+						var encodedUri = encodeURI(csvContent);
+						window.open(encodedUri);
+					}
+			</script>
+		<div style="height:50px">
+		</div>
+		<div>
+			<table id="xml_table" border="1" width="100%">
+				<tr>
+					<th> Time </th>
+					<th> Race No </th>
+					<th> No </th>
+					<th> Win_Odds </th>
+					<th> Win </th>
+					<th> AllWin </th>
+				</tr>
+			</table>
+		</div>
+		<script>
+
+		autoRun();
+
+		function autoRun(){
+			getData();
+			setTimeout(function(){
+				autoRun();
+			}, 300000);
+		}
+
+		function getData(){
+			for(var i=1;i<10;i++)
+			{
+				getTotalWin(i);
+			}
+		}
+
+		function getTotalWin(RaceNo){
+			var xhttp = new XMLHttpRequest();
+			xhttp.onreadystatechange = function() {
+					if (this.readyState == 4 && this.status == 200) {
+
+						var parser = new DOMParser();
+						var xmlDoc = parser.parseFromString(xhttp.responseText,"text/xml");
+						var TotalWin = 0;
+						//var TotalWin = 1000000;
+						var obj = $.parseJSON(xhttp.responseText);
+						obj.inv.forEach(i => i.pool=="WIN"?TotalWin=i.value:null);
+						getWin(RaceNo,TotalWin);
+					}
+			};
+			xhttp.open("GET", "http://bet.hkjc.com/racing/getJSON.aspx?type=pooltot&date=2018-07-01&venue=ST&raceno="+RaceNo, true);
+			xhttp.send();
+		}
+
+		function getWin(RaceNo,TotalWin){
+				var xhttp = new XMLHttpRequest();
+				xhttp.onreadystatechange = function() {
+				    if (this.readyState == 4 && this.status == 200) {
+							console.log("ready = "+RaceNo+" and "+TotalWin);
+							console.log(xhttp.responseText);
+							var parser = new DOMParser();
+							var xmlDoc = parser.parseFromString(xhttp.responseText,"text/xml");
+							var date = new Date();
+							var split = xhttp.responseText.split(";");
+							console.log(split);
+							for(var i=1;i<split.length;i++){
+							//for(var i=0;i<10;i++){
+								var Odd = split[i].split("=")[1];
+
+								//$('#xml_table').append("<tr class="+RaceNo+"_"+i+"><th class='d'>14:00</th><th class='d'>"+RaceNo+"</th><th class='d'>"+(i/1+1)+"</th><th class='d'>"+(i+1)*10+"</th><th class='d'>"+TotalWin/(i+1)*10*0.8+"</th><th class='d'>"+TotalWin+"</th></tr>");
+								$('#xml_table').append("<tr class="+RaceNo+"_"+i+"><th class='d'>"+date.getHours()+":"+date.getMinutes()+"</th><th class='d'>"+RaceNo+"</th><th class='d'>"+i+"</th><th class='d'>"+Odd+"</th><th class='d'>"+TotalWin/Odd*0.8+"</th><th class='d'>"+TotalWin+"</th></tr>");
+							}
+
+							$('#xml_table').append("<tr><font color='red'><th>This</th><th>is</th><th>a</th><th>gay</th><th>website</th><th>!</th></font></tr>");
+				    }
+				};
+				xhttp.open("GET", "http://bet.hkjc.com/racing/getJSON.aspx?type=WIN&date=2018-07-01&venue=ST&raceno="+RaceNo, true);
+				xhttp.send();
+		}
+
+		</script>
+
+		<!-- jQuery Plugins -->
+		<script src="js/jquery.min.js"></script>
+		<script src="js/bootstrap.min.js"></script>
+		<script src="js/main.js"></script>
+
+	</body>
+</html>
